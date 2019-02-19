@@ -14,5 +14,7 @@
     <orderEntry type="library" name="Maven: org.wildfly.openssl:wildfly-openssl-java:1.0.6.Final" level="project" />
     <orderEntry type="library" name="Maven: org.bouncycastle:bcpkix-jdk15on:1.60" level="project" />
     <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-jdk15on:1.60" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.1.30.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-common:4.1.30.Final" level="project" />
   </component>
 </module>

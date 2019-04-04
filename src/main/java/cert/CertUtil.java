@@ -2,15 +2,8 @@ package cert;
 
 
 
-import org.bouncycastle.jce.PKCS12Util;
-import org.bouncycastle.jce.provider.PEMUtil;
-import org.bouncycastle.openssl.PEMDecryptor;
-import org.bouncycastle.openssl.PKCS8Generator;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.openssl.jcajce.JcaPKCS8Generator;
 import org.bouncycastle.operator.OutputEncryptor;
-import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
-import sun.misc.BASE64Encoder;
 import sun.security.tools.keytool.CertAndKeyGen;
 import sun.security.x509.*;
 
@@ -20,14 +13,13 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
 
 public class CertUtil {
     private static SecureRandom secureRandom;
-    private static String RSAOREC = "EC";//  RSA
-    private static String SIGN_AL = "SHA384withECDSA";// SHA1withRSA
-    private static int LEN = 256;//256
+    private static String RSAOREC = "RSA";//  EC
+    private static String SIGN_AL = "SHA1withRSA";// SHA384withECDSA
+    private static int LEN = 1024;//256
     static {
         try {
             secureRandom = SecureRandom.getInstance("SHA1PRNG", "SUN");
@@ -54,7 +46,23 @@ public class CertUtil {
      * @throws SignatureException
      * @throws KeyStoreException
      */
-    public static void createRootCert(String rootPfxPath, String rootCrtPath,String rootPriPemPath,X500Name issue,String rootAlias,String chainPath) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, CertificateException, SignatureException, IOException, KeyStoreException, SignatureException, InvalidKeyException {
+    //创建根证书 issue颁发者
+    public static void createRootCert(
+//            String issuePfxPath = "d:/CERT/client/rootstore.pfx";
+//            String issueCrtPath = "d:/CERT/client/rootca.crt";
+//            String issuePriKeyPath = "d:/CERT/client/rootkey.pem";
+//            String issueAlias = "MyRootCAClient";
+//            String rootpem = "d:/CERT/client/rootca.pem";
+//            //root
+//            CertUtil.createRootCert(issuePfxPath,
+//            issueCrtPath, issuePriKeyPath,issue,issueAlias,rootpem);
+
+           // rootPriPemPath:rootkey.pem
+           //  rootAlias别名  rootAlias
+           //issue ：X500Name
+           //chainPath ：rootca.pem
+            String rootPfxPath, String rootCrtPath,String rootPriPemPath,
+            X500Name issue,String rootAlias,String chainPath) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, CertificateException, SignatureException, IOException, KeyStoreException, SignatureException, InvalidKeyException {
         CertAndKeyGen rootCertAndKeyGen = new CertAndKeyGen(RSAOREC,
                 SIGN_AL, null);
         rootCertAndKeyGen.setRandom(secureRandom);
@@ -63,7 +71,8 @@ public class CertUtil {
                 issue, 3650 * 24L * 60L * 60L);
         X509Certificate[] X509Certificates = new X509Certificate[] { rootCertificate };
         String password = "123456";
-        PrivateKey pk = rootCertAndKeyGen.getPrivateKey();
+
+        //rootAlias根别名  私钥  密码 证书链 pfx文件路径  pem文件路径 证书链文件路径
         createKeyStore(rootAlias, rootCertAndKeyGen.getPrivateKey(), password
                 .toCharArray(),  X509Certificates, rootPfxPath,rootPriPemPath,chainPath);
         FileOutputStream fos = new FileOutputStream(new File(rootCrtPath));
@@ -93,6 +102,7 @@ public class CertUtil {
      * @throws UnrecoverableKeyException
      * @throws SignatureException
      */
+    //签发证书
     public static void createIssueCert(X500Name issue, X500Name subject,
                                 String issueAlias, String issuePfxPath, String issuePassword,
                                 String issueCrtPath, String subjectAlias, String subjectPfxPath,
@@ -133,7 +143,7 @@ public class CertUtil {
         X509Certificate certificate = (X509Certificate) cert;
         X509Certificate issueCertificate = readX509Certificate(issueCrtPath);
         X509Certificate[] X509Certificates = new X509Certificate[] {
-                certificate };//issueCertificate
+                certificate,issueCertificate };//issueCertificate
         createKeyStore(subjectAlias, certAndKeyGen.getPrivateKey(),
                 subjectPassword.toCharArray(),X509Certificates, subjectPfxPath,subjectPemPath,chainPath);
         FileOutputStream fos = new FileOutputStream(new File(subjectCrtPath));
@@ -141,17 +151,20 @@ public class CertUtil {
         fos.close();
     }
 
-
+    //保存私钥
     public static void savePrivateKey(File file, PrivateKey privateKey, OutputEncryptor encryptor) throws IOException {
-        JcaPKCS8Generator jcaPKCS8Generator = new JcaPKCS8Generator(privateKey, encryptor);
+        //JcaPKCS8Generator jcaPKCS8Generator = new JcaPKCS8Generator(privateKey, encryptor);
         StringWriter stringWriter = new StringWriter();
-        try (JcaPEMWriter pw = new JcaPEMWriter(stringWriter)) {
-            pw.writeObject(privateKey);
-        }
-        OutputStream out = new FileOutputStream(file);
-        System.out.println(stringWriter.toString());
-        out.write(stringWriter.toString().getBytes());
-        out.close();
+//        try (JcaPEMWriter pw = new JcaPEMWriter(stringWriter)) {
+//            pw.writeObject(privateKey);
+//        }
+        JcaPEMWriter jcaPEMWriter = new JcaPEMWriter(new FileWriter(file));
+        jcaPEMWriter.writeObject(privateKey);
+        jcaPEMWriter.close();
+        //OutputStream out = new FileOutputStream(file);
+       // System.out.println(stringWriter.toString());
+//        out.write(stringWriter.toString().getBytes());
+//        out.close();
     }
     /**
      * 证书私钥存储设施
@@ -171,6 +184,7 @@ public class CertUtil {
      * @throws CertificateException
      * @throws IOException
      */
+    //生成证书存储文件 filePath pfx文件路径
     private static void createKeyStore(String alias, Key key, char[] password,
                                        java.security.cert.Certificate[] chain, String filePath,String pemPath,String chainPath) throws KeyStoreException,
             NoSuchAlgorithmException, CertificateException, IOException {
@@ -189,6 +203,7 @@ public class CertUtil {
         FileOutputStream fos = new FileOutputStream(filePath);
         keyStore.store(fos, password);
         fos.close();
+        //保存私钥
         savePrivateKey(f,(PrivateKey) key,null);
 /*        BASE64Encoder encoder = new BASE64Encoder();
         String encoded = encoder.encode(key.getEncoded());
@@ -257,7 +272,7 @@ public class CertUtil {
         inStream.close();
         return cert;
     }
-
+    //签发二级证书
     public static void createIssue2Cert(X500Name issue, X500Name subject,
                                         String issueAlias, String issuePfxPath, String issuePassword,
                                         String issueCrtPath, String rootCrtPath,String subjectAlias,
@@ -298,7 +313,7 @@ public class CertUtil {
         X509Certificate issueCertificate = readX509Certificate(issueCrtPath);
         X509Certificate rootcert = readX509Certificate(rootCrtPath);
         X509Certificate[] X509Certificates = new X509Certificate[] {
-                certificate};//, issueCertificate,rootcert
+                certificate,issueCertificate,rootcert};//, issueCertificate,rootcert
         createKeyStore(subjectAlias, certAndKeyGen.getPrivateKey(),
                 subjectPassword.toCharArray(),X509Certificates, subjectPfxPath,pemPath,chainPath);
         FileOutputStream fos = new FileOutputStream(new File(subjectCrtPath));

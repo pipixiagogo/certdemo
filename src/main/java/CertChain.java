@@ -3,10 +3,14 @@ import sun.security.x509.X500Name;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Scanner;
 
 public class CertChain {
-    public static void main(String[] args) throws Exception {
+//    public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException,
+//            InvalidKeyException, CertificateException, IOException,
+//            KeyStoreException, UnrecoverableKeyException, SignatureException {
 //        X500Name issue = new X500Name("CN=RootCA,OU=ISI,O=BenZeph,L=CD,ST=SC,C=CN");
 //        CertUtil.createRootCert("d:/CA/ROOTCA.pfx","d:/CA/ROOTCA.crt",issue);
 //        X500Name subject = new X500Name(
@@ -39,5 +43,5 @@ public class CertChain {
 //        CertUtil.createIssue2Cert(subject,subject2,subjectAlias,subjectPfxPath,subjectPassword,
 //                 subjectCrtPath,issueCrtPath,subject2Alias,subject2PfxPath,subjectPassword,subject2CrtPath);
 //
-   }
+//   }
 }

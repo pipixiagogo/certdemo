@@ -7,4 +7,5 @@ public class MyTest {
         new Thread(myThread,"窗口3").start();
 
     }
+
 }
